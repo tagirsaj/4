@@ -1,137 +1,81 @@
 using System;
 using System.Drawing;
-namespace OOP_lab4
+using System.Windows.Forms;
+
+namespace OOP_Lab4
 {
     public partial class Form1 : Form
     {
+        private MyStorage storage;
+        private ToolStrip toolStrip;
+        private ToolStripButton btnCircle;
+        private ToolStripButton btnRectangle;
+        private PictureBox pbCanvas;
+        private string currentTool = "Circle";
+
         public Form1()
         {
-            InitializeComponent();
+            SetupUI();
+            storage = new MyStorage();
         }
 
-
-public abstract class Shape
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public int Size { get; set; }
-        public Color ShapeColor { get; set; }
-        public bool IsSelected { get; set; }
-
-        public Shape(int x, int y, int size)
+        private void SetupUI()
         {
-            X = x; Y = y; Size = size;
-            ShapeColor = Color.Blue;
-            IsSelected = false;
+            this.Text = "Визуальный редактор - Этап 2 (Только рисование)";
+            this.Size = new Size(800, 600);
+
+            toolStrip = new ToolStrip();
+            btnCircle = new ToolStripButton("Круг") { Tag = "Circle", Checked = true };
+            btnRectangle = new ToolStripButton("Квадрат") { Tag = "Rectangle" };
+
+            btnCircle.Click += Tool_Click;
+            btnRectangle.Click += Tool_Click;
+
+            toolStrip.Items.Add(btnCircle);
+            toolStrip.Items.Add(btnRectangle);
+
+            pbCanvas = new PictureBox();
+            pbCanvas.Dock = DockStyle.Fill;
+            pbCanvas.BackColor = Color.White;
+            pbCanvas.Paint += Canvas_Paint;
+            pbCanvas.MouseClick += Canvas_MouseClick;
+
+            this.Controls.Add(pbCanvas);
+            this.Controls.Add(toolStrip);
         }
 
-        public abstract void Draw(Graphics g);
-        public abstract bool Contains(Point p);
-
-        public virtual void Move(int dx, int dy, int boundsWidth, int boundsHeight)
+        private void Tool_Click(object sender, EventArgs e)
         {
-            int newX = X + dx;
-            int newY = Y + dy;
+            ToolStripButton btn = sender as ToolStripButton;
+            currentTool = btn.Tag.ToString();
 
-            if (newX - Size / 2 >= 0 && newX + Size / 2 <= boundsWidth) X = newX;
-            if (newY - Size / 2 >= 0 && newY + Size / 2 <= boundsHeight) Y = newY;
+            btnCircle.Checked = (currentTool == "Circle");
+            btnRectangle.Checked = (currentTool == "Rectangle");
         }
 
-        public void Resize(int dSize)
+        private void Canvas_MouseClick(object sender, MouseEventArgs e)
         {
-            if (Size + dSize > 5) Size += dSize;
+            Shape newShape = null;
+            if (currentTool == "Circle")
+                newShape = new Circle(e.X, e.Y, 50);
+            else if (currentTool == "Rectangle")
+                newShape = new RectangleShape(e.X, e.Y, 50);
+
+            if (newShape != null)
+            {
+                storage.Add(newShape);
+                pbCanvas.Invalidate();
+            }
+        }
+
+        private void Canvas_Paint(object sender, PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            for (int i = 0; i < storage.Count; i++)
+            {
+                storage[i].Draw(e.Graphics);
+            }
         }
     }
-
-    public class Circle : Shape
-    {
-        public Circle(int x, int y, int size) : base(x, y, size) { }
-
-        public override void Draw(Graphics g)
-        {
-            using (SolidBrush brush = new SolidBrush(ShapeColor))
-            {
-                g.FillEllipse(brush, X - Size / 2, Y - Size / 2, Size, Size);
-            }
-            if (IsSelected)
-            {
-                using (Pen pen = new Pen(Color.Red, 2))
-                {
-                    g.DrawRectangle(pen, X - Size / 2, Y - Size / 2, Size, Size);
-                }
-            }
-        }
-
-        public override bool Contains(Point p)
-        {
-            int dx = p.X - X;
-            int dy = p.Y - Y;
-            return (dx * dx + dy * dy) <= (Size / 2 * Size / 2);
-        }
-    }
-
-    public class RectangleShape : Shape
-    {
-        public RectangleShape(int x, int y, int size) : base(x, y, size) { }
-
-        public override void Draw(Graphics g)
-        {
-            using (SolidBrush brush = new SolidBrush(ShapeColor))
-            {
-                g.FillRectangle(brush, X - Size / 2, Y - Size / 2, Size, Size);
-            }
-            if (IsSelected)
-            {
-                using (Pen pen = new Pen(Color.Red, 2))
-                {
-                    g.DrawRectangle(pen, X - Size / 2 - 2, Y - Size / 2 - 2, Size + 4, Size + 4);
-                }
-            }
-        }
-
-        public override bool Contains(Point p)
-        {
-            return p.X >= X - Size / 2 && p.X <= X + Size / 2 &&
-                   p.Y >= Y - Size / 2 && p.Y <= Y + Size / 2;
-        }
-    }
-
-    public class MyStorage
-    {
-        private Shape[] items;
-        private int count;
-
-        public MyStorage(int capacity = 100)
-        {
-            items = new Shape[capacity];
-            count = 0;
-        }
-
-        public int GetCount() => count;
-        public Shape GetObject(int index) => items[index];
-
-        public void Add(Shape shape)
-        {
-            if (count < items.Length)
-            {
-                items[count] = shape;
-                count++;
-            }
-        }
-
-        public void RemoveSelected()
-        {
-            int newCount = 0;
-            for (int i = 0; i < count; i++)
-            {
-                if (!items[i].IsSelected)
-                {
-                    items[newCount] = items[i];
-                    newCount++;
-                }
-            }
-            count = newCount;
-        }
-    }
-}
 }
