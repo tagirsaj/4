@@ -32,14 +32,14 @@
             toolStrip1 = new ToolStrip();
             btnCircle = new ToolStripButton();
             btnSquare = new ToolStripButton();
-            pictureBox1 = new PictureBox();
+            pbCanvas = new PictureBox();
             colorDialog1 = new ColorDialog();
             menuStrip1 = new MenuStrip();
             toolStripMenuItem1 = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripMenuItem();
             toolStripMenuItem3 = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pbCanvas).BeginInit();
             menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -60,7 +60,9 @@
             btnCircle.ImageTransparentColor = Color.Magenta;
             btnCircle.Name = "btnCircle";
             btnCircle.Size = new Size(29, 24);
+            btnCircle.Tag = "Circle";
             btnCircle.Text = "toolStripButton1";
+            btnCircle.Click += Tool_Click;
             // 
             // btnSquare
             // 
@@ -69,17 +71,21 @@
             btnSquare.ImageTransparentColor = Color.Magenta;
             btnSquare.Name = "btnSquare";
             btnSquare.Size = new Size(29, 24);
+            btnSquare.Tag = "Rectangle";
             btnSquare.Text = "toolStripButton2";
+            btnSquare.Click += Tool_Click;
             // 
-            // pictureBox1
+            // pbCanvas
             // 
-            pictureBox1.BackColor = SystemColors.Window;
-            pictureBox1.Dock = DockStyle.Fill;
-            pictureBox1.Location = new Point(0, 55);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(800, 395);
-            pictureBox1.TabIndex = 1;
-            pictureBox1.TabStop = false;
+            pbCanvas.BackColor = SystemColors.Window;
+            pbCanvas.Dock = DockStyle.Fill;
+            pbCanvas.Location = new Point(0, 55);
+            pbCanvas.Name = "pbCanvas";
+            pbCanvas.Size = new Size(800, 395);
+            pbCanvas.TabIndex = 1;
+            pbCanvas.TabStop = false;
+            pbCanvas.Paint += pbCanvas_Paint;
+            pbCanvas.MouseClick += pbCanvas_MouseClick;
             // 
             // menuStrip1
             // 
@@ -114,7 +120,7 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(pictureBox1);
+            Controls.Add(pbCanvas);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
@@ -122,7 +128,7 @@
             Text = "Form1";
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pbCanvas).EndInit();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             ResumeLayout(false);
@@ -134,7 +140,7 @@
         private ToolStrip toolStrip1;
         private ToolStripButton btnCircle;
         private ToolStripButton btnSquare;
-        private PictureBox pictureBox1;
+        private PictureBox pbCanvas;
         private ColorDialog colorDialog1;
         private MenuStrip menuStrip1;
         private ToolStripMenuItem toolStripMenuItem1;

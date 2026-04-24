@@ -1,81 +1,90 @@
+using OOP_lab4;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace OOP_Lab4
+namespace OOP_lab4
 {
-    public partial class Form1 : Form
+    public partial class Form1 : Form // Обязательно наследование от Form!
     {
-        private MyStorage storage;
-        private ToolStrip toolStrip;
-        private ToolStripButton btnCircle;
-        private ToolStripButton btnRectangle;
-        private PictureBox pbCanvas;
+        private MyStorage storage = new MyStorage();
         private string currentTool = "Circle";
 
         public Form1()
         {
-            SetupUI();
-            storage = new MyStorage();
+            InitializeComponent();
+            this.KeyPreview = true; // Чтобы форма ловила нажатия клавиш [cite: 98]
+
+            // Если вы НЕ создавали кнопки в дизайнере, раскомментируйте SetupUI()
+            // SetupUI(); 
         }
 
-        private void SetupUI()
-        {
-            this.Text = "Визуальный редактор - Этап 2 (Только рисование)";
-            this.Size = new Size(800, 600);
-
-            toolStrip = new ToolStrip();
-            btnCircle = new ToolStripButton("Круг") { Tag = "Circle", Checked = true };
-            btnRectangle = new ToolStripButton("Квадрат") { Tag = "Rectangle" };
-
-            btnCircle.Click += Tool_Click;
-            btnRectangle.Click += Tool_Click;
-
-            toolStrip.Items.Add(btnCircle);
-            toolStrip.Items.Add(btnRectangle);
-
-            pbCanvas = new PictureBox();
-            pbCanvas.Dock = DockStyle.Fill;
-            pbCanvas.BackColor = Color.White;
-            pbCanvas.Paint += Canvas_Paint;
-            pbCanvas.MouseClick += Canvas_MouseClick;
-
-            this.Controls.Add(pbCanvas);
-            this.Controls.Add(toolStrip);
-        }
-
+        // Обработка выбора инструмента (Круг/Квадрат)
         private void Tool_Click(object sender, EventArgs e)
         {
-            ToolStripButton btn = sender as ToolStripButton;
-            currentTool = btn.Tag.ToString();
-
-            btnCircle.Checked = (currentTool == "Circle");
-            btnRectangle.Checked = (currentTool == "Rectangle");
+            if (sender is ToolStripButton btn)
+            {
+                currentTool = btn.Tag.ToString();
+                // Визуально отмечаем выбранную кнопку
+                foreach (ToolStripItem item in toolStrip1.Items)
+                    if (item is ToolStripButton b) b.Checked = (b == btn);
+            }
         }
 
-        private void Canvas_MouseClick(object sender, MouseEventArgs e)
+        private void pbCanvas_MouseClick(object sender, MouseEventArgs e)
         {
-            Shape newShape = null;
-            if (currentTool == "Circle")
-                newShape = new Circle(e.X, e.Y, 50);
-            else if (currentTool == "Rectangle")
-                newShape = new RectangleShape(e.X, e.Y, 50);
-
-            if (newShape != null)
+            bool hitAny = false;
+            foreach (var shape in storage.All())
             {
+                if (shape.IsHit(e.Location))
+                {
+                    // Если Ctrl не нажат, снимаем выделение с других [cite: 58]
+                    if (Control.ModifierKeys != Keys.Control) storage.UnselectAll();
+                    shape.IsSelected = !shape.IsSelected;
+                    hitAny = true;
+                    break;
+                }
+            }
+
+            if (!hitAny)
+            {
+                if (Control.ModifierKeys != Keys.Control) storage.UnselectAll();
+
+                // Создание новой фигуры [cite: 98]
+                Shape newShape = (currentTool == "Circle") ? new Circle() : new RectangleShape();
+                newShape.X = e.X - newShape.Size / 2;
+                newShape.Y = e.Y - newShape.Size / 2;
                 storage.Add(newShape);
-                pbCanvas.Invalidate();
             }
+            Refresh();
         }
 
-        private void Canvas_Paint(object sender, PaintEventArgs e)
+        private void pbCanvas_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            foreach (var shape in storage.All()) shape.Draw(e.Graphics);
+        }
 
-            for (int i = 0; i < storage.Count; i++)
+        // Управление клавиатурой: перемещение и удаление [cite: 98]
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            int dx = 0, dy = 0;
+            if (e.KeyCode == Keys.Left) dx = -5;
+            if (e.KeyCode == Keys.Right) dx = 5;
+            if (e.KeyCode == Keys.Up) dy = -5;
+            if (e.KeyCode == Keys.Down) dy = 5;
+
+            if (dx != 0 || dy != 0)
             {
-                storage[i].Draw(e.Graphics);
+                foreach (var s in storage.All())
+                    if (s.IsSelected && s.CanMove(dx, dy, pbCanvas.Size)) // Проверка границ [cite: 100]
+                    {
+                        s.X += dx; s.Y += dy;
+                    }
             }
+
+            if (e.KeyCode == Keys.Delete) storage.RemoveSelected(); // Удаление [cite: 58]
+
+            Refresh();
         }
     }
 }

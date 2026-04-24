@@ -1,135 +1,71 @@
 using System;
 using System.Drawing;
+using System.Collections.Generic;
 
-namespace OOP_Lab4
+namespace OOP_lab4
 {
-    // 1. Абстрактный базовый класс
+    // Базовый абстрактный класс фигуры 
     public abstract class Shape
     {
         public int X { get; set; }
         public int Y { get; set; }
-        public int Size { get; set; }
-        public Color ShapeColor { get; set; }
-        public bool IsSelected { get; set; }
+        public int Size { get; set; } = 60;
+        public bool IsSelected { get; set; } = false;
 
-        public Shape(int x, int y, int size)
+        // Общий метод проверки выхода за границы [cite: 100]
+        public bool CanMove(int dx, int dy, Size containerSize)
         {
-            X = x; Y = y; Size = size;
-            ShapeColor = Color.Blue;
-            IsSelected = false;
+            int nextX = X + dx;
+            int nextY = Y + dy;
+            return nextX >= 0 && nextY >= 0 &&
+                   (nextX + Size) <= containerSize.Width &&
+                   (nextY + Size) <= containerSize.Height;
         }
 
         public abstract void Draw(Graphics g);
-        public abstract bool Contains(Point p);
-
-        // Контроль выхода за границы при перемещении
-        public virtual void Move(int dx, int dy, int boundsWidth, int boundsHeight)
-        {
-            int newX = X + dx;
-            int newY = Y + dy;
-
-            if (newX - Size / 2 >= 0 && newX + Size / 2 <= boundsWidth) X = newX;
-            if (newY - Size / 2 >= 0 && newY + Size / 2 <= boundsHeight) Y = newY;
-        }
-
-        public void Resize(int dSize)
-        {
-            if (Size + dSize > 10) Size += dSize; // Защита от нулевого размера
-        }
+        public abstract bool IsHit(Point p); // Проверка попадания мышки [cite: 73]
     }
 
-    // 2. Класс Круг
     public class Circle : Shape
     {
-        public Circle(int x, int y, int size) : base(x, y, size) { }
-
         public override void Draw(Graphics g)
         {
-            using (SolidBrush brush = new SolidBrush(ShapeColor))
+            using (Pen pen = new Pen(IsSelected ? Color.Red : Color.Black, IsSelected ? 3 : 1))
             {
-                g.FillEllipse(brush, X - Size / 2, Y - Size / 2, Size, Size);
-            }
-            if (IsSelected)
-            {
-                using (Pen pen = new Pen(Color.Red, 2))
-                {
-                    g.DrawRectangle(pen, X - Size / 2, Y - Size / 2, Size, Size);
-                }
+                g.DrawEllipse(pen, X, Y, Size, Size);
             }
         }
-
-        public override bool Contains(Point p)
+        public override bool IsHit(Point p)
         {
-            int dx = p.X - X;
-            int dy = p.Y - Y;
-            return (dx * dx + dy * dy) <= (Size / 2 * Size / 2);
+            double centerX = X + Size / 2.0;
+            double centerY = Y + Size / 2.0;
+            double dist = Math.Sqrt(Math.Pow(p.X - centerX, 2) + Math.Pow(p.Y - centerY, 2));
+            return dist <= Size / 2.0;
         }
     }
 
-    // 3. Класс Квадрат
     public class RectangleShape : Shape
     {
-        public RectangleShape(int x, int y, int size) : base(x, y, size) { }
-
         public override void Draw(Graphics g)
         {
-            using (SolidBrush brush = new SolidBrush(ShapeColor))
+            using (Pen pen = new Pen(IsSelected ? Color.Red : Color.Black, IsSelected ? 3 : 1))
             {
-                g.FillRectangle(brush, X - Size / 2, Y - Size / 2, Size, Size);
-            }
-            if (IsSelected)
-            {
-                using (Pen pen = new Pen(Color.Red, 2))
-                {
-                    g.DrawRectangle(pen, X - Size / 2 - 2, Y - Size / 2 - 2, Size + 4, Size + 4);
-                }
+                g.DrawRectangle(pen, X, Y, Size, Size);
             }
         }
-
-        public override bool Contains(Point p)
+        public override bool IsHit(Point p)
         {
-            return p.X >= X - Size / 2 && p.X <= X + Size / 2 &&
-                   p.Y >= Y - Size / 2 && p.Y <= Y + Size / 2;
+            return p.X >= X && p.X <= X + Size && p.Y >= Y && p.Y <= Y + Size;
         }
     }
 
-    // 4. Собственный контейнер (с динамическим расширением)
+    // Собственный контейнер объектов из Л.Р.3 [cite: 59, 99]
     public class MyStorage
     {
-        private Shape[] items;
-        private int count;
-
-        public MyStorage(int capacity = 10)
-        {
-            items = new Shape[capacity];
-            count = 0;
-        }
-
-        public int Count => count;
-        public Shape this[int index] => items[index];
-
-        public void Add(Shape shape)
-        {
-            if (count >= items.Length)
-            {
-                Array.Resize(ref items, items.Length * 2); // Увеличиваем массив при нехватке места
-            }
-            items[count] = shape;
-            count++;
-        }
-
-        public void RemoveSelected()
-        {
-            int newCount = 0;
-            for (int i = 0; i < count; i++)
-            {
-                if (!items[i].IsSelected)
-                {
-                    items[newCount] = items[i];
-                    newCount++;
-                }
-            }
-            count = newCount; // "Удаляем" объекты, просто перезаписывая их и уменьшая счетчик
-        }
+        private List<Shape> shapes = new List<Shape>();
+        public void Add(Shape s) => shapes.Add(s);
+        public void RemoveSelected() => shapes.RemoveAll(s => s.IsSelected);
+        public IEnumerable<Shape> All() => shapes;
+        public void UnselectAll() { foreach (var s in shapes) s.IsSelected = false; }
     }
 }

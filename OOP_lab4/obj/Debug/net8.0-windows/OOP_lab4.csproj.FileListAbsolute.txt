@@ -14,3 +14,4 @@ C:\Users\11\source\repos\OOP_lab4\OOP_lab4\obj\Debug\net8.0-windows\refint\OOP_l
 C:\Users\11\source\repos\OOP_lab4\OOP_lab4\obj\Debug\net8.0-windows\OOP_lab4.pdb
 C:\Users\11\source\repos\OOP_lab4\OOP_lab4\obj\Debug\net8.0-windows\OOP_lab4.genruntimeconfig.cache
 C:\Users\11\source\repos\OOP_lab4\OOP_lab4\obj\Debug\net8.0-windows\ref\OOP_lab4.dll
+C:\Users\11\source\repos\OOP_lab4\OOP_lab4\obj\Debug\net8.0-windows\OOP_lab4.sourcelink.json
